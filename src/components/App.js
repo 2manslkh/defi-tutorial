@@ -17,6 +17,7 @@ class App extends Component {
       account: "",
       token: null,
       dBank: null,
+      weibalance: 0,
       balance: 0,
       dBankAddress: null,
     };
@@ -50,8 +51,13 @@ class App extends Component {
     const acc = await web3.eth.getAccounts();
     const netId = await web3.eth.net.getId();
     const net = await web3.eth.net;
-    const balance = await web3.eth.getBalance(acc[0]);
-    this.setState({ account: acc[0], balance: balance, web3: web3 });
+    const weibalance = await web3.eth.getBalance(acc[0]);
+    this.setState({
+      account: acc[0],
+      weibalance: weibalance,
+      balance: web3.utils.fromWei(weibalance),
+      web3: web3,
+    });
 
     console.log(acc);
     console.log(this.state.balance);
@@ -116,15 +122,40 @@ class App extends Component {
 
   async deposit(amount) {
     console.log(amount);
-    this.state.dBank.methods
-      .deposit()
-      .send({ value: amount.toString(), from: this.state.account });
+    if (this.state.bank !== "undefined") {
+      try {
+        await this.state.dBank.methods
+          .deposit()
+          .send({ value: amount.toString(), from: this.state.account });
+        const weibalance = await this.state.web3.eth.getBalance(
+          this.state.account
+        );
+        this.setState({
+          weibalance: weibalance,
+          balance: this.state.web3.utils.fromWei(weibalance),
+        });
+      } catch (e) {
+        console.log("ERROR: DEPOSIT", e);
+      }
+    }
   }
 
   async withdraw(e) {
-    //prevent button from default click
-    //check if this.state.dbank is ok
-    //in try block call dBank withdraw();
+    e.preventDefault();
+    try {
+      await this.state.dBank.methods
+        .withdraw()
+        .send({ from: this.state.account });
+      const weibalance = await this.state.web3.eth.getBalance(
+        this.state.account
+      );
+      this.setState({
+        weibalance: weibalance,
+        balance: this.state.web3.utils.fromWei(weibalance),
+      });
+    } catch (e) {
+      console.log("ERROR: WITHDRAW:", e);
+    }
   }
 
   render() {
@@ -145,7 +176,9 @@ class App extends Component {
           <br></br>
           <h1>Welcome to dBank</h1>
           <h2>
-            {this.state.account} {this.state.balance}
+            Address {this.state.account}
+            <br></br>
+            ETH Balance: {this.state.balance}
           </h2>
           <br></br>
           <div className="row">
@@ -159,7 +192,7 @@ class App extends Component {
                       <br></br>
                       min. amount 0.01 ETH?
                       <br></br>
-                      How much do you want to deposit?
+                      (1 deposit possible at a time)
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
@@ -191,7 +224,15 @@ class App extends Component {
                   <Tab eventKey="withdraw" title="Withdraw">
                     <div>
                       <br></br>
-                      Withdraw?
+                      Do you want to withdraw + take interest?
+                      <br></br>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        onClick={(e) => this.withdraw(e)}
+                      >
+                        WITHDRAW
+                      </button>
                     </div>
                   </Tab>
                 </Tabs>

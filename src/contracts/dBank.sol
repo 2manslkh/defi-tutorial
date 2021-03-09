@@ -21,7 +21,7 @@ contract dBank {
     );
 
     //pass as constructor argument deployed Token contract
-    constructor(Token _token) public {
+    constructor(Token _token) {
         //assign token deployed contract to variable
         token = _token;
     }
@@ -58,7 +58,7 @@ contract dBank {
 
         //calc interest per second
         uint256 interestPerSecond =
-            31668017 * (etherBalanceOf[msg.sender] / 1e16);
+            31668017 * (etherBalanceOf[msg.sender] / 1e5);
         uint256 interest = interestPerSecond * depositTime;
 
         //calc accrued interest

@@ -10,7 +10,7 @@ contract Token is ERC20 {
     //add minter changed event
     event MinterChanged(address indexed from, address to);
 
-    constructor() public payable ERC20("Kenk", "Kenk") {
+    constructor() payable ERC20("Kenk", "Kenk") {
         //asign initial minter
         minter = msg.sender;
     }
